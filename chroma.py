@@ -1,69 +1,70 @@
-import pandas as pd
 import chromadb
+import pandas as pd
 
-# Initialize ChromaDB client and collection
+# Initialize ChromaDB client
 chroma_client = chromadb.Client()
-collection_name = "DatasetEx"
 
-if collection_name not in chroma_client.list_collections():
-    collection = chroma_client.create_collection(name=collection_name)
-else:
-    collection = chroma_client.get_collection(name=collection_name)
+# Initialize collection
+collection_name = "DatasetEx"
+try:
+    collections = chroma_client.list_collections()
+    collection_names = [col.name for col in collections]
+    if collection_name not in collection_names:
+        collection = chroma_client.create_collection(name=collection_name)
+    else:
+        collection = chroma_client.get_collection(name=collection_name)
+except Exception as e:
+    print(f"Error creating collection: {str(e)}")
+    exit(1)
 
 # Load Excel data
-file = r"C:\Users\sachi\Downloads\Dataset - updated_file_with_contracts_final (2).csv"
+file = r"cleaned_dataset.csv"
 df = pd.read_csv(file)
 
+
 # Add an ID column if it doesn't exist
-df["ID"] = ["doc_" + str(i) for i in range(len(df))]
+if 'id' not in df.columns:
+    df['id'] = range(len(df))
+
+# Convert ID to string
+df['id'] = df['id'].astype(str)
 
 # Specify the columns for documents and metadata
-document_columns = ["Category", "Parties", "Agreement Date" ,"Expiration Date", "Renewal Term" , "Governing Law" , "Exclusivity","contract"]  # Replace with your chosen document columns
-metadata_columns = ["Document Name", "Effective Date"]  # Replace with your chosen metadata columns
+document_columns = ["Category", "Parties", "Agreement Date" ,"Effective Date", "Expiration Date", "Renewal Term" , "Governing Law" , "Law Explanation"]  
+metadata_columns = ["Category", "Parties", "Agreement Date", "Effective Date", "Expiration Date", "Renewal Term", "Governing Law", "Law Explanation"]  
 
 # Prepare documents, metadata, and IDs
 # Create documents using f-strings
 documents = df.apply(
     lambda row: (
-        f"Document Name: {row['Document Name']} | "
-        f"Effective Date: {row['Effective Date']} | "
         f"Category: {row['Category']} | "
-        f"Parties Involved: {row['Parties']} | "
+        f"Parties: {row['Parties']} | "
         f"Agreement Date: {row['Agreement Date']} | "
+        f"Effective Date: {row['Effective Date']} | "
         f"Expiration Date: {row['Expiration Date']} | "
         f"Renewal Term: {row['Renewal Term']} | "
         f"Governing Law: {row['Governing Law']} | "
-        f"Exclusivity: {row['Exclusivity']} | "
-        f"Contract Details: {row['contract']}"
+        f"Law Explanation: {row['Law Explanation']}"
     ),
     axis=1
 ).tolist()
 
 # Extract metadata
-metadata = df[["Document Name", "Effective Date", "Category"]].to_dict(orient="records")
+metadata = df[metadata_columns].to_dict(orient="records")
 
-ids = df["ID"].tolist()
+ids = df["id"].tolist()
 
-# Add data to the ChromaDB collection
-collection.add(documents=documents, metadatas=metadata, ids=ids)
-
-print(f"Added {len(documents)} records to the ChromaDB collection '{collection_name}'.")
-
-
-# # Specify the ID you want to search for
-# specific_id = "doc_0"  # Replace with the desired ID
-
-# # Retrieve data for the given ID
-# data_by_id = collection.get(ids=[specific_id])
-
-# # Check if data exists for the given ID
-# if data_by_id["documents"]:
-#     print(f"Data for ID '{specific_id}':")
-#     print("Document:", data_by_id["documents"][0])
-#     print("Metadata:", data_by_id["metadatas"][0])
-#     print("ID:", data_by_id["ids"][0])
-# else:
-#     print(f"No data found for ID '{specific_id}'.")
+try:
+    # Add data to the ChromaDB collection
+    collection.add(
+        documents=documents,
+        metadatas=metadata,
+        ids=ids
+    )
+    print(f"Added {len(documents)} records to the ChromaDB collection '{collection_name}'.")
+except Exception as e:
+    print(f"Error adding documents: {str(e)}")
+    exit(1)
 
 query_text = """
 1. Objective of the Agreement: The first party intends to transfer money to people residing in areas outside of the control of the Government of Syria; the second party has the proven capacity, experience, and highest reasonable standard of diligence to facilitate the transfers.
@@ -74,18 +75,24 @@ query_text = """
 6. Dispute Resolution: Both parties shall use their best efforts to resolve any dispute in a friendly manner, through consultation and clear communication; any dispute which cannot be resolved in such a way will be taken to a mutually agreed mediator on a cost-sharing basis.
 """
 
-# Perform similarity search
-top_k = 2  # Number of similar documents to retrieve
-results = collection.query(
-    query_texts=[query_text],
-    n_results=top_k
-)
+try:
+    # Perform similarity search
+    top_k = 2  # Number of similar documents to retrieve
+    results = collection.query(
+        query_texts=[query_text],
+        n_results=top_k
+    )
 
-# Process and display results
-# Display results
-print("Search Results:")
-for i, (doc_id, metadata, score) in enumerate(zip(results["ids"], results["metadatas"], results["distances"])):
-    print(f"\nResult {i + 1}:")
-    print(f"Similarity Score: {score:}")
-    print(f"Document ID: {doc_id}")
-    print(f"Contract Details: {metadata.get('Document Name', 'N/A')}")
+    # Process and display results
+    # Display results
+    print("Search Results:")
+    for i in range(len(results['ids'][0])):
+        print(f"\nResult {i + 1}:")
+        print(f"Similarity Score: {float(results['distances'][0][i]):.4f}")
+        print(f"Document ID: {results['ids'][0][i]}")
+        print(f"Category: {results['metadatas'][0][i].get('Category', 'N/A')}")
+        print(f"Governing Law: {results['metadatas'][0][i].get('Governing Law', 'N/A')}")
+        print(f"Document: {results['documents'][0][i]}")
+except Exception as e:
+    print(f"Error querying collection: {str(e)}")
+    exit(1)
