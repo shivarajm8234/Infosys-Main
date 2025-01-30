@@ -419,171 +419,119 @@ if 'chat_history' not in st.session_state:
 if 'confidence_scores' not in st.session_state:
     st.session_state.confidence_scores = []
 
-# Custom CSS for dark theme
+# Add custom CSS for better styling
 st.markdown("""
     <style>
-    /* Dark theme base styles */
-    .stApp {
-        background-color: #1a1a1a;
-        color: #ffffff;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    
-    /* Override Streamlit's default styles */
-    .stTextInput > div > div > input {
-        background-color: #2d2d2d;
-        color: white;
-    }
-    .stButton > button {
-        background-color: #0f52ba;
-        color: white;
-    }
-    .stTextArea > div > div > textarea {
-        background-color: #2d2d2d;
-        color: white;
-    }
-    .stTab {
-        color: white;
-    }
-    .stMarkdown {
-        color: white;
-    }
-    
-    /* Chat message styles */
-    .chat-message {
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
-        display: flex;
-        flex-direction: column;
-        color: white;
-    }
-    .user-message {
-        background-color: #2d2d2d;
-        border-left: 5px solid #0f52ba;
-    }
-    .assistant-message {
-        background-color: #363636;
-        border-left: 5px solid #28a745;
-    }
-    .confidence-indicator {
-        margin-top: 0.5rem;
-        font-size: 0.8rem;
-        color: #b0b0b0;
-    }
-    .main-header {
-        background: linear-gradient(90deg, #1a237e, #0d47a1);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    
-    /* Analysis card styles */
-    .analysis-card {
-        background-color: #2d2d2d;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 15px 0;
-        border-left: 4px solid #0f52ba;
-    }
-    
-    /* Section styles */
-    div[data-testid="stVerticalBlock"] > div {
-        background-color: #2d2d2d;
-        color: white;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
-    }
-    
-    /* Score indicators */
-    .score-indicator {
-        font-size: 2rem;
-        font-weight: bold;
-        text-align: center;
-        margin: 10px 0;
-        color: white;
-    }
-    
-    /* Metric styles */
-    .metric-label {
-        color: #b0b0b0;
-        font-size: 0.9rem;
-        margin-bottom: 5px;
-    }
-    .metric-value {
-        color: white;
-        font-size: 1.1rem;
-        margin-bottom: 15px;
-    }
-    
-    /* Info boxes */
-    div[data-testid="stInfo"] {
-        background-color: #2d2d2d;
-        color: white;
-        border: 1px solid #0f52ba;
-    }
-    
-    /* Headers and text */
-    h1, h2, h3, h4, h5, h6, p {
-        color: white !important;
-    }
-    
-    /* Lists */
-    ul, ol {
-        color: #b0b0b0;
-    }
-    
-    /* Container backgrounds */
-    div[data-testid="stDecoration"] {
-        background-color: #2d2d2d !important;
-    }
-    
-    /* Tab styles */
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: #2d2d2d;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: white !important;
-    }
-    .stTabs [data-baseweb="tab-highlight"] {
-        background-color: #0f52ba !important;
-    }
-    
-    /* File uploader */
-    .stFileUploader {
-        background-color: #2d2d2d;
-        border-color: #444;
-    }
-    
-    /* Explanatory boxes */
-    div[style*="background-color: #f8f9fa"] {
-        background-color: #2d2d2d !important;
-    }
-    div[style*="background-color: #f0f2f6"] {
-        background-color: #363636 !important;
-    }
-    
-    /* Text colors */
-    div[style*="color: #4a4a4a"],
-    div[style*="color: #666"],
-    div[style*="color: #2c3e50"],
-    p[style*="color: #666"] {
-        color: #b0b0b0 !important;
-    }
-    
-    /* Links */
-    a {
-        color: #66b3ff !important;
-    }
-    a:hover {
-        color: #99ccff !important;
-    }
+        /* Modern color scheme */
+        :root {
+            --primary-color: #1a73e8; /* Update this color if needed */
+            --secondary-color: #34a853;
+            --background-color: #121212; /* Dark background */
+            --text-color: #e0e0e0; /* Light text color */
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Main container styling */
+        .main-container {
+            padding: 2rem;
+            background-color: var(--background-color);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        /* Card styling */
+        .analysis-card {
+            background-color: #1e1e1e; /* Dark card background */
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Metric cards */
+        .metric-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background-color: #1e1e1e; /* Dark card background */
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            flex: 1;
+            margin: 0 0.5rem;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .rating-text {
+            color: #999; /* Light grey text */
+            font-size: 1rem;
+        }
+
+        /* Lists and content */
+        .analysis-content {
+            color: #ccc; /* Light grey text */
+            line-height: 1.6;
+        }
+
+        .analysis-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .analysis-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .analysis-list li:before {
+            content: "•";
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .metric-container {
+                flex-direction: column;
+            }
+            
+            .metric-card {
+                margin: 0.5rem 0;
+            }
+        }
     </style>
 """, unsafe_allow_html=True)
+
+
 
 # Enhanced header
 st.markdown("""
@@ -653,18 +601,11 @@ st.title("Contract Analysis Assistant")
 st.sidebar.title("Options")
 
 # Add tabs
-tab1, tab2, tab3 = st.tabs(["Upload & Analyze", "Legal Compliance", "Chat"])
+tab1, tab2, tab3 = st.tabs(["Upload & Analyze", ' ', "Chat"])
 
 with tab1:
     st.header("Upload Contract PDF")
     uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
-    category = st.selectbox("Select Contract Category", [
-        "Co_Branding", "Endorsement", "Development", "Transportation",
-        "Maintenance", "Hosting", "IP", "Other"
-    ])
-    governing_law = st.selectbox("Select Governing Law", [
-        "International Law", "Indian Law", "US Law", "Other"
-    ])
     
     if uploaded_file:
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
@@ -672,154 +613,118 @@ with tab1:
             
             # Extract text and process PDF
             text = extract_text_from_pdf(tmp_file.name)
-            doc_id = process_pdf_file(tmp_file.name, category, governing_law)
             
-            # Store the text in session state for other tabs
+            # Store the text in session state
             st.session_state['contract_text'] = text
             
-            # Search for similar documents
-            similar_docs = search_similar(text, k=3)
-            
-            st.success(f"PDF processed and stored with ID: {doc_id}")
-            
-            # Display similar documents if found
-            if similar_docs:
-                st.subheader("Similar Documents Found:")
-                for idx, doc in enumerate(similar_docs):
-                    if doc['similarity'] < 0.7:  # Additional threshold check
-                        with st.expander(f"Similar Document {idx + 1} (Similarity: {doc['similarity']:.2f})"):
-                            st.write(f"**Category:** {doc['metadata']['category']}")
-                            st.write(f"**Governing Law:** {doc['metadata']['governing_law']}")
-                            st.write("**Content Preview:**")
-                            st.text(doc['metadata']['text'])  # Using st.text to preserve formatting
-            else:
-                st.info("No similar documents found. Showing AI-generated analysis.")
-                dummy_data = get_dummy_legal_data()
-                with st.expander("AI Analysis"):
-                    st.write(dummy_data)
+            # Automatically detect category and governing law
+            prompt = f"""
+            Analyze the following contract text and determine:
+            1. The category (choose one): Co_Branding, Endorsement, Development, Transportation, Maintenance, Hosting, IP, Other
+            2. The governing law (choose one): International Law, Indian Law, US Law, Other
 
-with tab2:
+            Respond ONLY with a JSON object in this exact format:
+            {{"category": "selected_category", "governing_law": "selected_law"}}
+
+            Contract Text:
+            {text[:1000]}  # Only analyze first 1000 chars for classification
+            """
+            
+            try:
+                response = model.generate_content(prompt)
+                # Clean the response text to ensure it only contains the JSON
+                response_text = response.text.strip()
+                if response_text.startswith('json'):
+                    response_text = response_text[7:-3]  # Remove json and ``` markers
+                detected_data = json.loads(response_text)
+                category = detected_data.get("category", "Other")
+                governing_law = detected_data.get("governing_law", "Other")
+            except Exception as e:
+                st.warning("Using default classification due to detection error")
+                category = "Other"
+                governing_law = "Other"
+            
+            # Process the PDF file
+            process_pdf_file(tmp_file.name, category, governing_law)
+            
+            # Automatically perform legal compliance analysis
+            with st.spinner("Analyzing legal compliance..."):
+                st.session_state['analysis_result'] = analyze_legal_compliance(st.session_state['contract_text'])
+                analysis_result = st.session_state['analysis_result']
+            
+            # Create three columns for the header
+            col1, col2, col3 = st.columns([1, 2, 1])
+            
+            with col1:
+                st.markdown("<h3 style='text-align: center;'>Category</h3>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align: center; font-size: 18px;'>{category}</p>", unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown("<h3 style='text-align: center;'>Analysis Results</h3>", unsafe_allow_html=True)
+                score = analysis_result["legal_compliance"]["sections"]["score"]
+                rating = analysis_result["legal_compliance"]["sections"]["overall_rating"]
+                st.markdown(f"<p style='text-align: center; font-size: 18px;'>Score: {score}</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align: center; font-size: 18px;'>Rating: {rating}</p>", unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown("<h3 style='text-align: center;'>Governing Law</h3>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align: center; font-size: 18px;'>{governing_law}</p>", unsafe_allow_html=True)
+            
+            # Display analysis results in a modern layout
+st.markdown('<div class="main-container">', unsafe_allow_html=True)
+
+category = st.session_state.get('category', 'Not Specified')
+governing_law = st.session_state.get('governing_law', 'Not Specified')
+
+# Metrics row
+if 'analysis_result' not in st.session_state:
+    st.error("Please analyze a contract first.")
+else:
+    analysis_result = st.session_state['analysis_result']
     st.markdown("""
-    <div style='background-color: #2d2d2d; padding: 20px; border-radius: 10px; margin-bottom: 30px;'>
-        <h2 style='color: #0f52ba; margin-top: 0;'>Legal Compliance Analysis</h2>
-        <p style='color: #b0b0b0; margin-top: 5px;'>This AI-powered analysis evaluates your contract against industry standards and legal requirements. The evaluation focuses on:</p>
-        <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;'>
-            <div>
-                <h4 style='color: #2c3e50; margin: 0;'>Evaluation Areas</h4>
-                <ul style='margin: 5px 0; padding-left: 20px;'>
-                    <li>Legal Compliance (GDPR, HIPAA)</li>
-                    <li>Terms Clarity & Precision</li>
-                    <li>Document Completeness</li>
-                    <li>Internal Consistency</li>
-                </ul>
+        <div class="metric-container">
+            <div class="metric-card">
+                <h3>Category</h3>
+                <div class="score-value">{}</div>
             </div>
-            <div>
-                <h4 style='color: #2c3e50; margin: 0;'>Scoring System</h4>
-                <ul style='margin: 5px 0; padding-left: 20px;'>
-                    <li><span style='color: #dc3545;'>0-35: Inadequate</span></li>
-                    <li><span style='color: #ffc107;'>36-70: Adequate (Needs Improvement)</span></li>
-                    <li><span style='color: #28a745;'>71-100: Exceeds Requirements</span></li>
-                </ul>
+            <div class="metric-card">
+                <h3>Analysis Score</h3>
+                <div class="score-value">{}</div>
+                <div class="rating-text">{}</div>
+            </div>
+            <div class="metric-card">
+                <h3>Governing Law</h3>
+                <div class="score-value">{}</div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if 'contract_text' in st.session_state:
-        if st.button("Analyze Legal Compliance"):
-            with st.spinner("Analyzing legal compliance..."):
-                analysis = analyze_legal_compliance(st.session_state['contract_text'])
-                
-                # Create three columns for the header
-                col1, col2, col3 = st.columns([1, 2, 1])
-                
-                with col1:
-                    score = analysis["legal_compliance"]["sections"]["score"]
-                    rating_color = get_rating_color(score)
-                    st.markdown(f"""
-                    <div style='text-align: center; background-color: #363636; padding: 20px; border-radius: 10px;'>
-                        <h2 style='margin: 0;'>{rating_color}{score}</h2>
-                        <p style='margin: 5px 0 0 0; color: #b0b0b0;'>Overall Score</p>
+    """.format(
+        category or 'Not Specified',
+        analysis_result["legal_compliance"]["sections"]["score"].replace('SCORE:', '').strip(),
+        analysis_result["legal_compliance"]["sections"]["overall_rating"].replace('OVERALL RATING:', '').strip(),
+        governing_law or 'Not Specified'
+    ), unsafe_allow_html=True)
+
+    # Analysis sections
+    sections = [
+        ("Legal Compliance", "legal_compliance", "⚖️"),
+        ("Contract Structure", "contract_structure", "📄"),
+        ("Risk Assessment", "risk_assessment", "⚠️"),
+        ("Key Recommendations", "recommendations", "💡"),
+        ("Required Changes", "required_changes", "✔️")
+    ]
+
+    if 'analysis_result' in st.session_state:
+        for title, key, icon in sections:
+            st.markdown(f"""
+                <div class="analysis-card">
+                    <h3 class="section-title">{icon} {title}</h3>
+                    <div class="analysis-content">
+                        {analysis_result["legal_compliance"]["sections"][key]}
                     </div>
-                    """, unsafe_allow_html=True)
-                
-                with col2:
-                    rating = analysis["legal_compliance"]["sections"]["overall_rating"]
-                    st.markdown(f"""
-                    <div style='text-align: center; background-color: #363636; padding: 20px; border-radius: 10px;'>
-                        <h3 style='margin: 0; color: #2c3e50;'>{rating}</h3>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                # Section 1: Legal Compliance
-                st.markdown("""
-                <div style='margin-top: 30px;'>
-                    <h3 style='color: #0f52ba;'>📋 Legal Compliance Assessment</h3>
-                    <p style='color: #b0b0b0; margin-top: 5px;'>Evaluation of adherence to key legal frameworks and regulations</p>
                 </div>
-                """, unsafe_allow_html=True)
-                
-                with st.container():
-                    st.markdown(format_section_content(analysis["legal_compliance"]["sections"]["legal_compliance"]))
-                
-                # Section 2: Contract Structure
-                st.markdown("""
-                <div style='margin-top: 20px;'>
-                    <h3 style='color: #0f52ba;'>🏗️ Contract Structure Analysis</h3>
-                    <p style='color: #b0b0b0; margin-top: 5px;'>Assessment of document organization, clarity, and completeness</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                with st.container():
-                    st.markdown(format_section_content(analysis["legal_compliance"]["sections"]["contract_structure"]))
-                
-                # Section 3: Risk Assessment
-                st.markdown("""
-                <div style='margin-top: 20px;'>
-                    <h3 style='color: #0f52ba;'>⚠️ Risk Assessment</h3>
-                    <p style='color: #b0b0b0; margin-top: 5px;'>Identification and analysis of potential legal and operational risks</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                with st.container():
-                    st.markdown(format_section_content(analysis["legal_compliance"]["sections"]["risk_assessment"]))
-                
-                # Create two columns for recommendations and changes
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.markdown("""
-                    <div style='margin-top: 20px;'>
-                        <h3 style='color: #0f52ba;'>💡 Key Recommendations</h3>
-                        <p style='color: #b0b0b0; margin-top: 5px;'>Suggested improvements for better compliance</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.markdown(format_section_content(analysis["legal_compliance"]["sections"]["recommendations"]))
-                
-                with col2:
-                    st.markdown("""
-                    <div style='margin-top: 20px;'>
-                        <h3 style='color: #0f52ba;'>🔄 Required Changes</h3>
-                        <p style='color: #b0b0b0; margin-top: 5px;'>Critical updates needed for compliance</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.markdown(format_section_content(analysis["legal_compliance"]["sections"]["required_changes"]))
-                
-                # Add an explanation box
-                st.markdown("""
-                <div style='margin-top: 30px; padding: 20px; background-color: #2d2d2d; border-radius: 10px; border-left: 5px solid #0f52ba;'>
-                    <h4 style='color: #0f52ba; margin-top: 0;'>📌 Understanding This Analysis</h4>
-                    <p style='color: #4a4a4a; margin: 10px 0;'>This analysis is powered by advanced AI that evaluates your contract against industry standards and legal requirements. The evaluation focuses on:</p>
-                    <ul style='color: #4a4a4a; margin: 10px 0;'>
-                        <li><strong>Legal Framework Compliance:</strong> GDPR, HIPAA, and other relevant regulations</li>
-                        <li><strong>Document Structure:</strong> Organization, clarity, and completeness</li>
-                        <li><strong>Risk Management:</strong> Identification and mitigation strategies</li>
-                    </ul>
-                    <p style='color: #4a4a4a; margin: 10px 0;'><strong>Next Steps:</strong> Review the recommendations and required changes. Consider consulting with legal counsel for implementing critical updates.</p>
-                </div>
-                """, unsafe_allow_html=True)
-    else:
-        st.info("Please upload a contract in the Upload & Analyze tab first.")
+            """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 with tab3:
     st.markdown("""
@@ -870,7 +775,7 @@ with tab3:
 # Add sidebar information
 with st.sidebar:
     st.info("""
-    **Contract Analysis Assistant**
+    *Contract Analysis Assistant*
     
     This AI assistant evaluates contracts based on:
     1. Legal Compliance
