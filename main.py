@@ -11,12 +11,18 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import json
 import pickle
+import requests
 
 # Load environment variables
 load_dotenv()
 
 # Configure Gemini
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+api_key = os.getenv('GOOGLE_API_KEY')
+if not api_key:
+    st.error("Google API key not found. Please set GOOGLE_API_KEY in your .env file.")
+    raise ValueError("Missing Google API key")
+
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-pro')
 
 # Initialize SentenceTransformer
@@ -33,6 +39,8 @@ if os.path.exists(data_file):
 else:
     embeddings = []
     metadata_list = []
+
+print("API Key:", os.getenv('GOOGLE_API_KEY'))  # Will help verify the key is loaded
 
 def extract_text_from_pdf(pdf_file) -> str:
     """Extract text from uploaded PDF file"""
@@ -291,6 +299,75 @@ def get_dummy_legal_data():
         }
     }
 
+def send_to_slack(analysis_result):
+    """
+    Send analysis results to Slack using webhook
+    """
+    webhook_url = os.getenv('SLACK_WEBHOOK_URL')  # Get webhook URL from environment variable
+    
+    if not webhook_url:
+        st.error("Slack webhook URL not configured. Please set SLACK_WEBHOOK_URL environment variable.")
+        return
+    
+    # Format the analysis result for better readability in Slack
+    message = {
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": "🤖 Contract Analysis Results"
+                }
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Score:* {analysis_result['legal_compliance']['sections']['score']}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Rating:* {analysis_result['legal_compliance']['sections']['overall_rating']}"
+                    }
+                ]
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Legal Compliance Summary:*\n{analysis_result['legal_compliance']['sections']['legal_compliance'][:1000]}"
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Key Recommendations:*\n{analysis_result['legal_compliance']['sections']['recommendations']}"
+                }
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"Analysis completed at {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                    }
+                ]
+            }
+        ]
+    }
+    
+    try:
+        response = requests.post(webhook_url, json=message)
+        response.raise_for_status()
+        st.success("Analysis results sent to Slack successfully")
+    except Exception as e:
+        st.error(f"Failed to send message to Slack: {str(e)}")
+
 def analyze_legal_compliance(text: str):
     """Analyze legal compliance aspects of the contract"""
     # Truncate text if too long
@@ -342,9 +419,16 @@ def analyze_legal_compliance(text: str):
     
     try:
         response = model.generate_content(prompt)
-        return format_legal_analysis(response.text)
+        analysis_result = format_legal_analysis(response.text)
+        
+        # Send analysis results to Slack
+        send_to_slack(analysis_result)
+        
+        return analysis_result
     except Exception:
-        return get_dummy_legal_data()
+        dummy_result = get_dummy_legal_data()
+        send_to_slack(dummy_result)  # Send dummy data if analysis fails
+        return dummy_result
 
 def format_legal_analysis(analysis_text: str) -> dict:
     """Format the legal analysis response for better display"""
@@ -400,18 +484,18 @@ def format_section_content(content: str) -> str:
     
     return "\n".join(formatted_lines)
 
-def get_rating_color(score: str) -> str:
-    """Get appropriate color based on score"""
+def get_rating_color(confidence: str) -> str:
+    """Get appropriate emoji indicator based on confidence score"""
     try:
-        score_val = int(score.split('/')[0])
-        if score_val <= 35:
-            return "🔴 "  # Red circle for low scores
-        elif score_val <= 70:
-            return "🟡 "  # Yellow circle for medium scores
+        score = float(confidence)
+        if score <= 0.4:
+            return "🔴"  # Low confidence
+        elif score <= 0.7:
+            return "🟡"  # Medium confidence
         else:
-            return "🟢 "  # Green circle for high scores
+            return "🟢"  # High confidence
     except:
-        return "⚪ "  # White circle for unknown scores
+        return "⚪"  # Unknown confidence
 
 # Initialize session state for chat and confidence tracking
 if 'chat_history' not in st.session_state:
@@ -546,28 +630,31 @@ def chat_with_contract(user_query: str, contract_text: str):
     try:
         # Generate response using Gemini
         chat_prompt = f"""
-        Contract Text: {contract_text}
-        User Query: {user_query}
+        As a legal assistant, analyze this contract excerpt and answer the question.
         
-        Provide a detailed response addressing the user's query about the contract.
-        Include specific references to relevant sections when possible.
+        Contract Text:
+        {contract_text[:2000]}  # Limit context to avoid token limits
+        
+        User Question: {user_query}
+        
+        Provide a clear, detailed response that:
+        1. Directly addresses the user's question
+        2. References specific sections when relevant
+        3. Uses professional legal terminology
+        4. Provides concrete examples or explanations
         """
         
         response = model.generate_content(chat_prompt)
         response_text = response.text
         
-        # Calculate confidence score based on response characteristics
+        # Calculate confidence score
         confidence_score = calculate_confidence_score(response_text, contract_text)
-        st.session_state.confidence_scores.append(confidence_score)
         
-        # Format response with confidence indicator
-        formatted_response = {
+        return {
             'text': response_text,
             'confidence': confidence_score,
             'timestamp': pd.Timestamp.now().strftime("%H:%M")
         }
-        
-        return formatted_response
     except Exception as e:
         st.error(f"Error generating response: {str(e)}")
         return None
@@ -730,45 +817,76 @@ with tab3:
     st.markdown("""
         <div style='background-color: #2d2d2d; padding: 20px; border-radius: 10px; margin-bottom: 20px;'>
             <h2 style='color: #0f52ba; margin-top: 0;'>💬 Interactive Legal Assistant</h2>
-            <p style='color: #b0b0b0; margin-bottom: 0;'>Ask specific questions about your contract and get AI-powered insights with confidence scoring.</p>
+            <p style='color: #b0b0b0; margin-bottom: 0;'>Ask questions about your contract and get AI-powered insights.</p>
         </div>
     """, unsafe_allow_html=True)
     
     if 'contract_text' in st.session_state:
-        # Display chat history with enhanced styling
-        for i, (msg, confidence) in enumerate(zip(st.session_state.chat_history, st.session_state.confidence_scores)):
-            if i % 2 == 0:
+        # Chat input at the bottom
+        st.markdown("<div style='position: fixed; bottom: 0; width: 100%; padding: 20px; background-color: #1e1e1e;'>", unsafe_allow_html=True)
+        
+        # Chat input and send button in the same row
+        col1, col2 = st.columns([5,1])
+        with col1:
+            user_query = st.text_input(
+                "Ask a question:",
+                key="chat_input",
+                placeholder="e.g., What are the key termination clauses?"
+            )
+        with col2:
+            send_button = st.button("Send", key="send_button")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Add some space at the bottom to prevent overlap with fixed input
+        st.markdown("<div style='height: 80px;'></div>", unsafe_allow_html=True)
+        
+        if send_button and user_query:
+            with st.spinner("Generating response..."):
+                # Add user message to chat history
+                st.session_state.chat_history.append({
+                    'role': 'user',
+                    'content': user_query
+                })
+                
+                # Get AI response
+                response = chat_with_contract(user_query, st.session_state['contract_text'])
+                
+                if response:
+                    # Add AI response to chat history
+                    st.session_state.chat_history.append({
+                        'role': 'assistant',
+                        'content': response
+                    })
+                    st.session_state.confidence_scores.append(response['confidence'])
+                    st.experimental_rerun()
+        
+        # Display chat history
+        for msg in st.session_state.chat_history:
+            if msg['role'] == 'user':
                 st.markdown(f"""
-                    <div class='chat-message user-message'>
-                        <strong>You:</strong> {msg['query']}
+                    <div style='background-color: #1e1e1e; padding: 10px; border-radius: 5px; margin: 5px 0;'>
+                        <strong>You:</strong> {msg['content']}
                     </div>
                 """, unsafe_allow_html=True)
             else:
+                confidence = msg['content']['confidence']
                 confidence_color = get_rating_color(str(confidence))
                 st.markdown(f"""
-                    <div class='chat-message assistant-message'>
-                        <strong>Assistant:</strong> {msg['response']['text']}
-                        <div class='confidence-indicator'>
-                            <span style='color: {confidence_color}'>Confidence Score: {confidence:.2%}</span>
-                            <span style='float: right'>{msg['response']['timestamp']}</span>
+                    <div style='background-color: #2d2d2d; padding: 10px; border-radius: 5px; margin: 5px 0;'>
+                        <strong>Assistant:</strong> {msg['content']['text']}
+                        <div style='margin-top: 5px; font-size: 0.8em; color: #888;'>
+                            {confidence_color} Confidence: {confidence:.1%} | {msg['content']['timestamp']}
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
         
-        # Chat input
-        user_query = st.text_input("Ask a question about your contract:", key="chat_input", 
-                                 placeholder="e.g., What are the key termination clauses?")
-        
-        if st.button("Send", key="send_button"):
-            if user_query:
-                with st.spinner("Generating response..."):
-                    response = chat_with_contract(user_query, st.session_state['contract_text'])
-                    if response:
-                        st.session_state.chat_history.append({
-                            'query': user_query,
-                            'response': response
-                        })
-                        st.experimental_rerun()
+        # Clear chat button in a less prominent position
+        if st.session_state.chat_history:
+            if st.button("Clear Chat", key="clear_chat"):
+                st.session_state.chat_history = []
+                st.session_state.confidence_scores = []
+                st.experimental_rerun()
     else:
         st.info("Please upload a contract in the Upload & Analyze tab first.")
 
@@ -792,10 +910,7 @@ with st.sidebar:
     For full analysis, type "full analysis"
     """)
     
-    if st.button("Clear Chat History"):
-        st.session_state.chat_history = []
-        st.rerun()
-    
     if st.button("Process CSV Data"):
         process_csv_data()
         st.success("CSV data processed and stored in vector database")
+
